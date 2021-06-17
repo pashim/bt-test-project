@@ -1,7 +1,5 @@
 package kz.islam.sanayatov.test.service
 
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kz.islam.sanayatov.test.data.Phone
 import kz.islam.sanayatov.test.data.User
 import kz.islam.sanayatov.test.exception.BadRequestException
@@ -24,8 +22,6 @@ class PhoneBookingServiceImpl: PhoneBookingService {
     @Autowired
     private lateinit var userService: UserService
 
-    val mutex = Mutex()
-
     private val phones: Map<UUID, Phone> = mapOf(
         UUID.fromString("00000000-0000-0000-0000-000000000000") to Phone(name = "Samsung Galaxy S9"),
         UUID.fromString("00000000-0000-0000-0000-000000000001") to Phone(name = "Samsung Galaxy S8"),
@@ -41,30 +37,34 @@ class PhoneBookingServiceImpl: PhoneBookingService {
 
     private val bookings: HashMap<Phone, Pair<User, LocalDateTime>> = HashMap()
 
-    override suspend fun bookPhone(phoneId: UUID): Unit = mutex.withLock {
+    override suspend fun bookPhone(phoneId: UUID): Unit {
         validatePhoneId(phoneId)
 
         val phone = phones[phoneId]
-        if (bookings.containsKey(phone)) {
-            throw BadRequestException("Phone already in use by ".plus(bookings[phone]!!.first.name))
-        }
+        synchronized(this) {
+            if (bookings.containsKey(phone)) {
+                throw BadRequestException("Phone already in use by ".plus(bookings[phone]!!.first.name))
+            }
 
-        bookings[phone!!] = Pair(userService.getCurrentUser(), LocalDateTime.now())
+            bookings[phone!!] = Pair(userService.getCurrentUser(), LocalDateTime.now())
+        }
     }
 
-    override suspend fun returnPhone(phoneId: UUID): Unit = mutex.withLock {
+    override suspend fun returnPhone(phoneId: UUID): Unit {
         validatePhoneId(phoneId)
 
         val phone = phones[phoneId]
-        if (bookings.containsKey(phone).not()) {
-            throw BadRequestException("Not phone found in use")
-        }
+        synchronized(this) {
+            if (bookings.containsKey(phone).not()) {
+                throw BadRequestException("Not phone found in use")
+            }
 
-        val holder = bookings[phone]!!.first
-        if (holder != userService.getCurrentUser()) {
-            throw BadRequestException("Phone can be returned only by ".plus(holder.name))
+            val holder = bookings[phone]!!.first
+            if (holder != userService.getCurrentUser()) {
+                throw BadRequestException("Phone can be returned only by ".plus(holder.name))
+            }
+            bookings.remove(phone!!)
         }
-        bookings.remove(phone!!)
     }
 
     override fun getPhones() = phones
