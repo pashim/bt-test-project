@@ -35,7 +35,7 @@ class PhoneBookingServiceImpl: PhoneBookingService {
         UUID.fromString("00000000-0000-0000-0000-000000000009") to Phone(name = "Nokia 3310")
     )
 
-    private val bookings: HashMap<Phone, Pair<User, LocalDateTime>> = HashMap()
+    private val bookings: Hashtable<Phone, Pair<User, LocalDateTime>> = Hashtable()
 
     override fun bookPhone(phoneId: UUID) {
         validatePhoneId(phoneId)
