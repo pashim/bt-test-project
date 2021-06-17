@@ -1,6 +1,7 @@
 package kz.islam.sanayatov.test.service
 
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kz.islam.sanayatov.test.data.Phone
 import kz.islam.sanayatov.test.data.User
 import kz.islam.sanayatov.test.exception.BadRequestException
@@ -13,8 +14,8 @@ import kotlin.collections.HashMap
 interface PhoneBookingService {
     fun getPhones(): Map<UUID, Phone>
     fun getBookings(): Map<Phone, Pair<User, LocalDateTime>>
-    fun bookPhone(phoneId: UUID)
-    fun returnPhone(phoneId: UUID)
+    suspend fun bookPhone(phoneId: UUID)
+    suspend fun returnPhone(phoneId: UUID)
 }
 
 @Service
@@ -22,6 +23,8 @@ class PhoneBookingServiceImpl: PhoneBookingService {
 
     @Autowired
     private lateinit var userService: UserService
+
+    val mutex = Mutex()
 
     private val phones: Map<UUID, Phone> = mapOf(
         UUID.fromString("00000000-0000-0000-0000-000000000000") to Phone(name = "Samsung Galaxy S9"),
@@ -38,7 +41,7 @@ class PhoneBookingServiceImpl: PhoneBookingService {
 
     private val bookings: HashMap<Phone, Pair<User, LocalDateTime>> = HashMap()
 
-    override fun bookPhone(phoneId: UUID): Unit = runBlocking {
+    override suspend fun bookPhone(phoneId: UUID): Unit = mutex.withLock {
         validatePhoneId(phoneId)
 
         val phone = phones[phoneId]
@@ -49,7 +52,7 @@ class PhoneBookingServiceImpl: PhoneBookingService {
         bookings[phone!!] = Pair(userService.getCurrentUser(), LocalDateTime.now())
     }
 
-    override fun returnPhone(phoneId: UUID): Unit = runBlocking {
+    override suspend fun returnPhone(phoneId: UUID): Unit = mutex.withLock {
         validatePhoneId(phoneId)
 
         val phone = phones[phoneId]
