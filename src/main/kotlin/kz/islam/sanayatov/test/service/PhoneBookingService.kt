@@ -7,7 +7,9 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 import java.util.*
+import java.util.concurrent.locks.ReentrantLock
 import kotlin.collections.HashMap
+import kotlin.concurrent.withLock
 
 interface PhoneBookingService {
     fun getPhones(): Map<UUID, Phone>
@@ -37,11 +39,13 @@ class PhoneBookingServiceImpl: PhoneBookingService {
 
     private val bookings: HashMap<Phone, Pair<User, LocalDateTime>> = HashMap()
 
+    private val lock = ReentrantLock()
+
     override suspend fun bookPhone(phoneId: UUID): Unit {
         validatePhoneId(phoneId)
 
         val phone = phones[phoneId]
-        synchronized(this) {
+        lock.withLock {
             if (bookings.containsKey(phone)) {
                 throw BadRequestException("Phone already in use by ".plus(bookings[phone]!!.first.name))
             }
@@ -54,7 +58,7 @@ class PhoneBookingServiceImpl: PhoneBookingService {
         validatePhoneId(phoneId)
 
         val phone = phones[phoneId]
-        synchronized(this) {
+        lock.withLock {
             if (bookings.containsKey(phone).not()) {
                 throw BadRequestException("Not phone found in use")
             }
