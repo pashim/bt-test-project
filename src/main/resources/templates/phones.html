@@ -1,0 +1,26 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Phone Booking</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+</head>
+<body>
+    <table>
+        <tr><td>Model</td><td>Available</td><td>Holder</td><td>Date</td></tr>
+        <tr th:each="phone: ${phones.entrySet()}">
+            <td th:text="${phone.getValue().getName()}"></td>
+            <td th:text="${bookings.get(phone.getValue()) == null ? 'yes' : 'no'}"></td>
+            <td th:text="${bookings.get(phone.getValue()) != null ? bookings.get(phone.getValue()).getFirst().getName() : ''}"></td>
+            <td th:text="${bookings.get(phone.getValue()) != null ? bookings.get(phone.getValue()).getSecond() : ''}"></td>
+            <td>
+                <form th:if="${bookings.get(phone.getValue()) == null}" action="#" th:action="${'/phone/' + phone.getKey() + '/book'}" th:object="${phone.getKey()}" method="post">
+                    <input type="submit" value="Book" />
+                </form>
+                <form th:if="${bookings.get(phone.getValue()) != null && bookings.get(phone.getValue()).getFirst().equals(user)}" action="#" th:action="${'/phone/' + phone.getKey() + '/return'}" th:object="${phone.getKey()}" method="post">
+                    <input type="submit" value="Return" />
+                </form>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
