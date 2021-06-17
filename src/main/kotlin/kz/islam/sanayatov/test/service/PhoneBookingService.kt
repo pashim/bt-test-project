@@ -1,5 +1,6 @@
 package kz.islam.sanayatov.test.service
 
+import kotlinx.coroutines.runBlocking
 import kz.islam.sanayatov.test.data.Phone
 import kz.islam.sanayatov.test.data.User
 import kz.islam.sanayatov.test.exception.BadRequestException
@@ -35,9 +36,9 @@ class PhoneBookingServiceImpl: PhoneBookingService {
         UUID.fromString("00000000-0000-0000-0000-000000000009") to Phone(name = "Nokia 3310")
     )
 
-    private val bookings: Hashtable<Phone, Pair<User, LocalDateTime>> = Hashtable()
+    private val bookings: HashMap<Phone, Pair<User, LocalDateTime>> = HashMap()
 
-    override fun bookPhone(phoneId: UUID) {
+    override fun bookPhone(phoneId: UUID): Unit = runBlocking {
         validatePhoneId(phoneId)
 
         val phone = phones[phoneId]
@@ -48,12 +49,12 @@ class PhoneBookingServiceImpl: PhoneBookingService {
         bookings[phone!!] = Pair(userService.getCurrentUser(), LocalDateTime.now())
     }
 
-    override fun returnPhone(phoneId: UUID) {
+    override fun returnPhone(phoneId: UUID): Unit = runBlocking {
         validatePhoneId(phoneId)
 
         val phone = phones[phoneId]
         if (bookings.containsKey(phone).not()) {
-            return
+            throw BadRequestException("Not phone found in use")
         }
 
         val holder = bookings[phone]!!.first
