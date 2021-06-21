@@ -14,8 +14,8 @@ import kotlin.concurrent.withLock
 interface PhoneBookingService {
     fun getPhones(): Map<UUID, Phone>
     fun getBookings(): Map<Phone, Pair<User, LocalDateTime>>
-    suspend fun bookPhone(phoneId: UUID)
-    suspend fun returnPhone(phoneId: UUID)
+    fun bookPhone(phoneId: UUID)
+    fun returnPhone(phoneId: UUID)
 }
 
 @Service
@@ -41,7 +41,7 @@ class PhoneBookingServiceImpl: PhoneBookingService {
 
     private val lock = ReentrantLock()
 
-    override suspend fun bookPhone(phoneId: UUID): Unit {
+    override fun bookPhone(phoneId: UUID): Unit {
         validatePhoneId(phoneId)
 
         val phone = phones[phoneId]
@@ -54,7 +54,7 @@ class PhoneBookingServiceImpl: PhoneBookingService {
         }
     }
 
-    override suspend fun returnPhone(phoneId: UUID): Unit {
+    override fun returnPhone(phoneId: UUID): Unit {
         validatePhoneId(phoneId)
 
         val phone = phones[phoneId]
